@@ -19,7 +19,7 @@ class SoccerRepositoryImpl(private val service: SoccerService): SoccerRepository
                     emit(response.body()?.let {
                         UIState.Success(it)
                     } ?: throw Exception("Empty Response"))
-                } else throw Exception("Failed network call")
+                } else throw Exception("Request failed with code ${response.code()}")
             }catch (e: Exception){
                 emit(UIState.Error(e))
             }
@@ -33,7 +33,7 @@ class SoccerRepositoryImpl(private val service: SoccerService): SoccerRepository
 //                    emit(response.body()?.let { idResponse ->
 //                        UIState.Success(idResponse)
 //                    } ?: throw Exception("Empty response"))
-//                } else throw Exception("Failed network call")
+//                } else throw Exception("Request failed with code ${response.code()}")
 //            } catch (e: Exception) {
 //                emit(UIState.Error(e))
 //            }
@@ -47,7 +47,7 @@ class SoccerRepositoryImpl(private val service: SoccerService): SoccerRepository
                     emit(response.body()?.let { seasonResponse ->
                         UIState.Success(seasonResponse)
                     } ?: throw Exception("Empty response"))
-                } else throw Exception("Failed network call")
+                } else throw Exception("Request failed with code ${response.code()}")
             } catch (e: Exception){
                 emit(UIState.Error(e))
             }
@@ -65,7 +65,7 @@ class SoccerRepositoryImpl(private val service: SoccerService): SoccerRepository
                     emit(response.body()?.let { standingResponse ->
                         UIState.Success(standingResponse)
                     } ?: throw Exception("Empty response"))
-                } else throw Exception("Failed network call")
+                } else throw Exception("Request failed with code ${response.code()}")
             } catch (e: Exception) {
                 emit(UIState.Error(e))
             }

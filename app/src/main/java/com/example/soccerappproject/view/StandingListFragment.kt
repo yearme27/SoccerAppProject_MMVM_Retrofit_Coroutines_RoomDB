@@ -6,16 +6,15 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.fragment.navArgs
 import com.example.soccerappproject.databinding.FragmentStandingListBinding
-import com.example.soccerappproject.databinding.StandingListItemBinding
 import com.example.soccerappproject.model.StandingResponse
 import com.example.soccerappproject.model.UIState
 
-class StandingListFragment: ViewModelFragment() {
-
-    lateinit var binding: FragmentStandingListBinding
+class StandingListFragment : ViewModelFragment() {
+    private var _binding: FragmentStandingListBinding? = null
+    private val binding get() = _binding!!
 
     private val standingAdapter by lazy {
-       StandingAdapter()
+        StandingAdapter()
     }
 
     private val args: StandingListFragmentArgs by navArgs()
@@ -24,33 +23,39 @@ class StandingListFragment: ViewModelFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentStandingListBinding.inflate(layoutInflater)
-        configureObserver()
+    ): View {
+        _binding = FragmentStandingListBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    private fun configureObserver(){
-        viewModel.allStandingListData.observe(viewLifecycleOwner){ uistate ->
-            when(uistate){
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.rvStanding.adapter = standingAdapter
+
+        viewModel.allStandingListData.observe(viewLifecycleOwner) { uiState ->
+            when (uiState) {
                 is UIState.Loading -> {
-                    viewModel.getDemStanding(args.seasonYear, args.leagueId)
+                    binding.pbLoadStanding.visibility = View.VISIBLE
+                    binding.tvErrorTextStanding.visibility = View.GONE
                 }
                 is UIState.Error -> {
-                    binding.apply {
-                        pbLoadStanding.visibility = View.GONE
-                        tvErrorTextStanding.text = uistate.error.message
-                    }
+                    binding.pbLoadStanding.visibility = View.GONE
+                    binding.tvErrorTextStanding.visibility = View.VISIBLE
+                    binding.tvErrorTextStanding.text = uiState.error.localizedMessage ?: "Something went wrong"
                 }
-                is UIState.Success<*> ->{
-                    binding.apply {
-                        standingAdapter.setStandingList((uistate.response as StandingResponse).data.standings)
-                        rvStanding.adapter = standingAdapter
-                        pbLoadStanding.visibility = View.GONE
-                    }
+                is UIState.Success<*> -> {
+                    binding.pbLoadStanding.visibility = View.GONE
+                    binding.tvErrorTextStanding.visibility = View.GONE
+                    standingAdapter.setStandingList((uiState.response as StandingResponse).data.standings)
                 }
             }
         }
+
+        viewModel.loadStandings(args.seasonYear, args.leagueId)
     }
 
+    override fun onDestroyView() {
+        _binding = null
+        super.onDestroyView()
+    }
 }

@@ -9,33 +9,38 @@ import com.example.soccerappproject.model.StandingItem
 
 class StandingAdapter(
     private val list: MutableList<StandingItem> = mutableListOf(),
-): RecyclerView.Adapter<StandingAdapter.StandingViewHolder>(){
+) : RecyclerView.Adapter<StandingAdapter.StandingViewHolder>() {
 
-    fun setStandingList(newList: List<StandingItem>){
+    fun setStandingList(newList: List<StandingItem>) {
         list.clear()
         list.addAll(newList)
         notifyDataSetChanged()
     }
 
     inner class StandingViewHolder(private val binding: StandingListItemBinding)
-        :RecyclerView.ViewHolder(binding.root){
-            fun onBind(item: StandingItem){
-                binding.apply {
-                    tvDraws.text = item.stats[2].value.toString()
-                    tvWins.text = item.stats[0].value.toString()
-                    tvLoss.text = item.stats[1].value.toString()
-                    tvPoints.text = item.stats[4].value.toString()
-//                    tvPosition.text = item.note.rank.toString()
-                    tvGamesPlayed.text = item.stats[3].value.toString()
-                    tvTeamName.text = item.team.shortDisplayName
+        : RecyclerView.ViewHolder(binding.root) {
 
-                    Glide.with(ivTeam)
-                        .load(item.team.logos[0].href)
-                        .into(ivTeam)
-                }
-            }
-
+        // Stats are looked up by the name the API gives them, not by their position in the
+        // list, so a reordered or extended stats list can't show the wrong number or crash.
+        private fun StandingItem.stat(name: String): String {
+            return stats.firstOrNull { it.name == name }?.value?.toInt()?.toString() ?: "-"
         }
+
+        fun onBind(item: StandingItem) {
+            binding.apply {
+                tvWins.text = item.stat("wins")
+                tvLoss.text = item.stat("losses")
+                tvDraws.text = item.stat("ties")
+                tvGamesPlayed.text = item.stat("gamesPlayed")
+                tvPoints.text = item.stat("points")
+                tvTeamName.text = item.team.shortDisplayName
+
+                Glide.with(ivTeam)
+                    .load(item.team.logos.firstOrNull()?.href)
+                    .into(ivTeam)
+            }
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StandingViewHolder {
         return StandingViewHolder(

@@ -4,17 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.soccerappproject.databinding.FragmentSeasonListBinding
-import com.example.soccerappproject.model.LeagueDetails
-import com.example.soccerappproject.model.SeasonItem
 import com.example.soccerappproject.model.SeasonResponse
 import com.example.soccerappproject.model.UIState
 
-class SeasonListFragment: ViewModelFragment() {
-    lateinit var binding: FragmentSeasonListBinding
+class SeasonListFragment : ViewModelFragment() {
+    private var _binding: FragmentSeasonListBinding? = null
+    private val binding get() = _binding!!
 
     private val seasonAdapter by lazy {
         SeasonAdapter(openStanding = ::openStanding)
@@ -22,49 +20,49 @@ class SeasonListFragment: ViewModelFragment() {
 
     private val args: SeasonListFragmentArgs by navArgs()
 
-
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentSeasonListBinding.inflate(layoutInflater)
-        configureObserver()
+    ): View {
+        _binding = FragmentSeasonListBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    private fun configureObserver(){
-        viewModel.allSeasonListData.observe(viewLifecycleOwner) { uistate ->
-            when (uistate){
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.rvSeason.adapter = seasonAdapter
+
+        viewModel.allSeasonListData.observe(viewLifecycleOwner) { uiState ->
+            when (uiState) {
                 is UIState.Loading -> {
-                    viewModel.getDemSeason(args.leagueId)
+                    binding.pbLoadById.visibility = View.VISIBLE
+                    binding.tvErrorTextSeason.visibility = View.GONE
                 }
                 is UIState.Error -> {
-                    binding.apply {
-                        pbLoadById.visibility = View.GONE
-                        tvErrorTextSeason.text = uistate.error.message
-                    }
+                    binding.pbLoadById.visibility = View.GONE
+                    binding.tvErrorTextSeason.visibility = View.VISIBLE
+                    binding.tvErrorTextSeason.text = uiState.error.localizedMessage ?: "Something went wrong"
                 }
                 is UIState.Success<*> -> {
-                    binding.apply {
-                        seasonAdapter.setSeasonList((uistate.response as SeasonResponse).data.seasons)
-                        rvSeason.adapter = seasonAdapter
-                        pbLoadById.visibility = View.GONE
-
-
-                    }
+                    binding.pbLoadById.visibility = View.GONE
+                    binding.tvErrorTextSeason.visibility = View.GONE
+                    seasonAdapter.setSeasonList((uiState.response as SeasonResponse).data.seasons)
                 }
             }
         }
+
+        viewModel.loadSeasons(args.leagueId)
     }
 
-    fun openStanding(season: Int){
-        viewModel.setLoadingStanding()
+    private fun openStanding(season: Int) {
         findNavController().navigate(
-            SeasonListFragmentDirections.actionSeasonListToStanding(args.leagueId,season)
+            SeasonListFragmentDirections.actionSeasonListToStanding(args.leagueId, season)
         )
     }
 
-
+    override fun onDestroyView() {
+        _binding = null
+        super.onDestroyView()
+    }
 }

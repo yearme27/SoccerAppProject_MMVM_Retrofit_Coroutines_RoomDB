@@ -255,7 +255,7 @@ data class LeagueResult(
 
 data class StandingItem(
     val team: TeamItem,
-    val note: NoteItem,
+    val note: NoteItem?,
     val stats: List<StatsData>
 )
 
@@ -274,6 +274,9 @@ data class NoteItem(
     val color: String
 )
 
+// Gson ignores Kotlin nullability, and values like points per game can be fractional,
+// so these are nullable and the value is a Double.
 data class StatsData(
-    val value: Int
+    val name: String?,
+    val value: Double?
 )
